@@ -8,6 +8,8 @@ A lightweight tool for viewing and navigating FITS (Flexible Image Transport Sys
 - **Customization:** Adjust font size and column width.
 - **Status:** Shows current page, total rows, and displayed rows.
 
+![FITS Viewer Screenshot](img/screenshot.png)
+
 ## Prerequisites
 - **Python 3.x:** Must be installed and in the system PATH (check with `python --version`).
 - **Dependencies:**
