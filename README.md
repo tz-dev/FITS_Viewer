@@ -6,11 +6,11 @@ A lightweight tool for viewing and navigating FITS (Flexible Image Transport Sys
 
 - **Dynamic Loading:** Columns are automatically loaded from the FITS file, with no hardcoded columns in the code.
 - **Paged Display:** Adjustable number of rows per page (default: 50).
-- **Column Selection:** Select any columns to display.
 - **Navigation:** Previous/Next page with mouse or buttons.
-- **Customization:** Adjust font size and column width.
-- **Status:** Shows current page, total rows, and displayed rows.
+- **Jump to:** Jump to any page for quicker navigation.
 - **Mousewheel Support:** Navigate pages via scroll wheel.
+- **Customization:** Adjust font size, column width, columns to display.
+- **Status:** Shows current page, total rows, and displayed rows.
 - **Memory-Efficient:** Uses `memmap=True` to handle large files.
 
 ![FITS Viewer Screenshot](img/screenshot.png)
