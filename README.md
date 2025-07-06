@@ -10,6 +10,7 @@ A lightweight tool for viewing and navigating FITS (Flexible Image Transport Sys
 - **Customization**: Adjust font size, column width, number of rows, and select specific columns to display.
 - **Status Display**: Shows current page, total rows, and number of displayed rows.
 - **Image Viewer**: Displays image HDUs with zoom (20% steps), rotation (±90°), and navigation between images using Previous/Next buttons or mousewheel.
+- **Real-time RA/DEC** coordinate display using WCS
 - **Memory-Efficient**: Uses `memmap=True` to handle large FITS files efficiently.
 
 ---
