@@ -1,18 +1,22 @@
 # FITS Viewer
 
-A lightweight tool for viewing and navigating FITS (Flexible Image Transport System) files, built with Python and Tkinter. This tool dynamically loads and displays tabular data from FITS files, especially suited for large datasets like `specObj-dr17.fits` from the SDSS.
+A lightweight tool for viewing and navigating FITS (Flexible Image Transport System) files, built with Python and Tkinter. This tool dynamically loads and displays tabular data and images from FITS files, especially suited for large datasets like `specObj-dr17.fits` from the SDSS.
 
 ## Features
 
-- **Dynamic Loading:** Columns are automatically loaded from the FITS file, with no hardcoded columns in the code.
-- **Navigation:** Previous/Next page with mouse or buttons.
-- **Jump to:** Jump to any page for quicker navigation.
-- **Mousewheel Support:** Navigate pages via scroll wheel.
-- **Customization:** Adjust font size, column width, rows & columns to display.
-- **Status:** Shows current page, total rows, and displayed rows.
-- **Memory-Efficient:** Uses `memmap=True` to handle large files.
+- **Dynamic Loading**: Columns are automatically loaded from HDU 1 of the FITS file for tabular display, with no hardcoded columns in the code.
+- **Table Navigation**: Navigate through tabular data using Previous/Next buttons or mousewheel for page up/down.
+- **Jump to Page**: Jump to any page for quick navigation in large datasets.
+- **Customization**: Adjust font size, column width, number of rows, and select specific columns to display.
+- **Status Display**: Shows current page, total rows, and number of displayed rows.
+- **Image Viewer**: Displays image HDUs with zoom (20% steps), rotation (±90°), and navigation between images using Previous/Next buttons or mousewheel.
+- **Memory-Efficient**: Uses `memmap=True` to handle large FITS files efficiently.
 
-![FITS Viewer Screenshot](img/screenshot.png)
+![FITS Viewer Screenshot](img/screenshot_1.png)
+
+---
+
+![FITS Viewer Screenshot](img/screenshot_2.png)
 
 ---
 
@@ -22,7 +26,7 @@ A lightweight tool for viewing and navigating FITS (Flexible Image Transport Sys
 - **Dependencies** (install via `pip`):
 
 ```bash
-  pip install astropy numpy
+  pip install astropy numpy pillow matplotlib
 ```
 
 ---
@@ -50,3 +54,22 @@ Run the script directly with Python:
 ```bash
 python fits_viewer.py "path\to\your\file.fits"
 ```
+
+---
+
+## Navigation
+
+**Table Viewer:**
+
+    Use Previous/Next buttons or mousewheel to navigate pages.
+    Enter a page number in the "Jump to page" field and click Go.
+    Adjust Rows per Page, Column Width, and Font Size (via A+/A- buttons).
+    Select columns to display in the right-hand listbox and click Update Columns.
+
+**Image Viewer:**
+
+    Open via the Show Image Viewer button in the Table Viewer.
+    Use Zoom +/Zoom - for 20% zoom steps.
+    Use Rotate Left/Rotate Right for ±90° rotations.
+    Use Previous/Next buttons or mousewheel to navigate between image HDUs.
+    View HDU details (index, shape, type, zoom, rotation) in the info panel.
