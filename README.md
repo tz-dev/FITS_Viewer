@@ -51,6 +51,8 @@ Use the provided fview.bat to run the tool with a FITS file:
 ```bash
 fview "path\to\your\file.fits"
 ```
+...or just call fview to open a file selection dialogue.
+
 ## Calling via Python
 
 Run the script directly with Python:
