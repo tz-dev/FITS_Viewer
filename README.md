@@ -4,12 +4,12 @@ A lightweight tool for viewing and navigating FITS (Flexible Image Transport Sys
 
 ## Features
 
-- **Dynamic Loading**: Columns are automatically loaded from HDU 1 of the FITS file for tabular display, with no hardcoded columns in the code.
+- **Dynamic Loading**: Columns are automatically loaded from the first available BinTableHDU or TableHDU.
 - **Table Navigation**: Navigate through tabular data using Previous/Next buttons or mousewheel for page up/down.
 - **Jump to Page**: Jump to any page for quick navigation in large datasets.
 - **Customization**: Adjust font size, column width, number of rows, and select specific columns to display.
 - **Status Display**: Shows current page, total rows, and number of displayed rows.
-- **Image Viewer**: Displays image HDUs with zoom (20% steps), rotation (±90°), and navigation between images using Previous/Next buttons or mousewheel, plus real-time RA/DEC coordinate display using WCS
+- **Image Viewer**: Displays image HDUs with zoom (20% steps), rotation (±90°), and navigation between images using Previous/Next buttons or mousewheel, plus real-time RA/DEC coordinate display (if WCS is present in the FITS header)
 - **Memory-Efficient**: Uses `memmap=True` to handle large FITS files efficiently.
 
 ---
@@ -28,7 +28,7 @@ A lightweight tool for viewing and navigating FITS (Flexible Image Transport Sys
 - **Dependencies** (install via `pip`):
 
 ```bash
-  pip install astropy numpy pillow matplotlib tkinter
+  pip install astropy numpy pillow matplotlib
 ```
 
 ---
