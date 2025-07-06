@@ -15,4 +15,3 @@ if not exist "%FILE%" (
 )
 
 python "fits_viewer.py" "%FILE%"
-pause
