@@ -76,3 +76,17 @@ python fits_viewer.py "path\to\your\file.fits"
     Use Rotate Left/Rotate Right for ±90° rotations.
     Use Previous/Next buttons or mousewheel to navigate between image HDUs.
     View HDU details (index, shape, type, zoom, rotation) in the info panel.
+
+---
+
+## Comparison with Other FITS Viewers
+
+| Tool                   | UI / Usability                     | Strengths                                   | Weaknesses                                           |
+|------------------------|------------------------------------|---------------------------------------------|------------------------------------------------------|
+| **SAOImage DS9**       | GUI-based, but complex             | Very powerful, widely adopted               | Overkill for simple tasks, dated interface           |
+| **fv (FITS Viewer)**   | Classic, minimal                   | Stable, FITS-compliant                      | Outdated interface, limited interaction              |
+| **Aladin**             | Java-based, astronomy-focused      | Rich astronomical layers, powerful          | Heavyweight, overcomplicated for quick inspection    |
+| **QFitsView**          | Qt-based, old-fashioned layout     | Image & spectral support                    | Non-intuitive navigation, no table viewer            |
+| **Astropy + matplotlib** | Code-only, no GUI                | Extremely flexible for scripting            | No GUI, no interactive exploration                   |
+| **FITS Viewer (this tool)** | **Modern, lightweight, direct** | **Intuitive, Python-based, extensible**     | No spectral tools or region annotations (by design)  |
+
