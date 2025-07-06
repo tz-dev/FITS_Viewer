@@ -236,17 +236,22 @@ class ImageViewer:
         y = shape[0] - (event.y * shape[0] / self.canvas.winfo_height())
         self.last_mouse_pos = (x, y)
 
-        # Create tooltip with coordinates
-        try:
-            wcs = WCS(hdu.header, relax=True)
-            ra, dec = wcs.pixel_to_world_values(x, y)
-            ctype1 = hdu.header.get('CTYPE1', 'Unknown')
-            ctype2 = hdu.header.get('CTYPE2', 'Unknown')
-            tooltip_text = f"{ctype1}: {ra:.6f}\n{ctype2}: {dec:.6f}"
-        except Exception:
-            tooltip_text = f"Pixel X: {x:.2f}\nPixel Y: {y:.2f}"
-        
-        self.create_tooltip(self.canvas, event.x_root, event.y_root, tooltip_text)
+        # Destroy existing tooltip
+        self.destroy_tooltip()
+
+        # Create tooltip with coordinates after a short delay
+        def show_tooltip():
+            try:
+                wcs = WCS(hdu.header, relax=True)
+                ra, dec = wcs.pixel_to_world_values(x, y)
+                ctype1 = hdu.header.get('CTYPE1', 'Unknown')
+                ctype2 = hdu.header.get('CTYPE2', 'Unknown')
+                tooltip_text = f"{ctype1}: {ra:.6f}\n{ctype2}: {dec:.6f}"
+            except Exception:
+                tooltip_text = f"Pixel X: {x:.2f}\nPixel Y: {y:.2f}"
+            self.create_tooltip(self.canvas, event.x_root, event.y_root, tooltip_text)
+
+        self.win.after(100, show_tooltip)  # Delay tooltip creation by 100 ms
 
     def show_image(self, mouse_x=None, mouse_y=None):
         """Display the current image HDU with zoom, rotation, and static header info."""
