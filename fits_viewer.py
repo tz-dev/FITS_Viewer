@@ -65,12 +65,13 @@ class ImageViewer:
             return
 
         self.index = 0
-        self.zoom_factor = 1.0
-        self.rotation_angle = 0
+        self.zoom_factor = 1.0  # Initial zoom factor
+        self.rotation_angle = 0  # Initial rotation angle (in degrees)
+
         self.win = tk.Toplevel()
         self.win.title("FITS Image Viewer")
         
-        # Adjust size
+        # Set window size
         self.win.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")
         # Center window
         self.center_window()
@@ -87,72 +88,72 @@ class ImageViewer:
         main_frame.grid_rowconfigure(0, weight=1)
         main_frame.grid_rowconfigure(1, weight=0)
 
-        # Canvas
-        self.canvas = tk.Label(main_frame)
+        # Canvas (with black background)
+        self.canvas = tk.Label(main_frame, bg="black")
         self.canvas.grid(row=0, column=0, sticky="nsew")
 
-        # Info-Text
-        self.info_text = tk.Text(main_frame, width=40, bg="black", fg="lime", font=("Consolas", 10))
+        # Info text (default background, lime foreground)
+        self.info_text = tk.Text(main_frame, width=40, fg="black", font=(FONT_NAME, FONT_SIZE))
         self.info_text.grid(row=0, column=1, sticky="ns")
 
-        # Buttons
+        # Buttons (in one row with even spacing between groups)
         btn_frame = ttk.Frame(main_frame)
         btn_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=20)
-        btn_frame.grid_columnconfigure(0, weight=1)
-        btn_frame.grid_columnconfigure(1, weight=0)
-        btn_frame.grid_columnconfigure(2, weight=0)
-        btn_frame.grid_columnconfigure(3, weight=0) 
-        btn_frame.grid_columnconfigure(4, weight=0)
-        btn_frame.grid_columnconfigure(5, weight=0)
-        btn_frame.grid_columnconfigure(6, weight=1)
+        btn_frame.grid_columnconfigure(0, weight=1)  # Left empty space
+        btn_frame.grid_columnconfigure(1, weight=0)  # Zoom buttons
+        btn_frame.grid_columnconfigure(2, weight=0)  # Spacing
+        btn_frame.grid_columnconfigure(3, weight=0)  # Nav buttons
+        btn_frame.grid_columnconfigure(4, weight=0)  # Spacing
+        btn_frame.grid_columnconfigure(5, weight=0)  # Rotate buttons
+        btn_frame.grid_columnconfigure(6, weight=1)  # Right empty space for Exit
 
-        # Zoom Buttons
+        # Zoom buttons
         zoom_buttons = ttk.Frame(btn_frame)
         zoom_buttons.grid(row=0, column=1, padx=20)
         ttk.Button(zoom_buttons, text="Zoom +", command=self.zoom_in).pack(side=tk.LEFT, padx=5)
         ttk.Button(zoom_buttons, text="Zoom -", command=self.zoom_out).pack(side=tk.LEFT, padx=5)
 
-        # Navigation Buttons
+        # Navigation buttons
         nav_buttons = ttk.Frame(btn_frame)
-        nav_buttons.grid(row=0, column=3, padx=20)
+        nav_buttons.grid(row=0, column=3, padx=20)  # Even spacing
         ttk.Button(nav_buttons, text="Previous", command=self.prev_image).pack(side=tk.LEFT, padx=5)
         ttk.Button(nav_buttons, text="Next", command=self.next_image).pack(side=tk.LEFT, padx=5)
 
-        # Rotation Buttons
+        # Rotation buttons
         rotate_buttons = ttk.Frame(btn_frame)
-        rotate_buttons.grid(row=0, column=5, padx=20)
+        rotate_buttons.grid(row=0, column=5, padx=20)  # Even spacing
         ttk.Button(rotate_buttons, text="Rotate Left", command=self.rotate_left).pack(side=tk.LEFT, padx=5)
         ttk.Button(rotate_buttons, text="Rotate Right", command=self.rotate_right).pack(side=tk.LEFT, padx=5)
 
-        # Exit
+        # Exit button
         ttk.Button(btn_frame, text="Exit", command=self.win.destroy).grid(row=0, column=6, sticky="e", padx=25)
         self.show_image()
 
     def center_window(self):
-        # Check screen size
+        # Get screen size
         screen_width = self.win.winfo_screenwidth()
         screen_height = self.win.winfo_screenheight()
-        # Calculate position
+        # Calculate position to center window
         x = (screen_width - WINDOW_WIDTH) // 2
         y = (screen_height - WINDOW_HEIGHT) // 2
         self.win.geometry(f"+{x}+{y}")
 
     def zoom_in(self):
-        self.zoom_factor *= 1.2  # Zoom +20%
+        self.zoom_factor *= 1.2  # Increase zoom by 20%
         self.show_image()
 
     def zoom_out(self):
-        self.zoom_factor /= 1.2  # Zoom -20%
-        if self.zoom_factor < 0.1:  # Min zoom
+        self.zoom_factor /= 1.2  # Decrease zoom by 20%
+        if self.zoom_factor < 0.1:  # Minimum zoom
             self.zoom_factor = 0.1
         self.show_image()
 
     def rotate_left(self):
-        self.rotation_angle = (self.rotation_angle - 90) % 360  # 90 deg counter clockwise
+        self.rotation_angle = (self.rotation_angle - 90) % 360  # Rotate 90 degrees counterclockwise
         self.show_image()
 
     def rotate_right(self):
-        self.rotation_angle = (self.rotation_angle + 90) % 360  # 90 deg clockwise
+        self.rotation_angle = (self.rotation_angle + 90) % 360  # Rotate 90 degrees clockwise
         self.show_image()
 
     def show_image(self):
@@ -160,12 +161,12 @@ class ImageViewer:
         data = hdu.data
         header = hdu.header
 
-        # Normalization
+        # Normalize data
         norm_data = np.nan_to_num(data)
         norm_data = (norm_data - np.min(norm_data)) / (np.ptp(norm_data) + 1e-9)
 
-        # Adjust size accorsing to zoom factor
-        base_size = 6  # base figsize
+        # Adjust image size based on zoom factor
+        base_size = 6  # Base figsize
         zoomed_size = base_size * self.zoom_factor
         fig = plt.figure(figsize=(zoomed_size, zoomed_size), dpi=100)
         plt.imshow(np.rot90(norm_data, k=self.rotation_angle // 90), cmap="gray", origin='lower')
@@ -180,7 +181,7 @@ class ImageViewer:
         self.canvas.configure(image=photo)
         self.canvas.image = photo
 
-        # Info-Text
+        # Update info text
         self.info_text.delete("1.0", tk.END)
         self.info_text.insert(tk.END, f"HDU #{self.hdul.index(hdu)}\n")
         self.info_text.insert(tk.END, f"Shape: {data.shape}\n")
