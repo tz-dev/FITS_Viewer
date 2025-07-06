@@ -12,6 +12,8 @@ A lightweight tool for viewing and navigating FITS (Flexible Image Transport Sys
 - **Image Viewer**: Displays image HDUs with zoom (20% steps), rotation (±90°), and navigation between images using Previous/Next buttons or mousewheel.
 - **Memory-Efficient**: Uses `memmap=True` to handle large FITS files efficiently.
 
+---
+
 ![FITS Viewer Screenshot](img/screenshot_1.png)
 
 ---
