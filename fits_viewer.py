@@ -91,7 +91,7 @@ class ImageViewer:
         self.canvas.grid(row=0, column=0, sticky="nsew")
         self.canvas.bind("<Motion>", self.on_mouse_move)
 
-        self.info_text = tk.Text(main_frame, width=40, fg="black", font=(FONT_NAME, FONT_SIZE))
+        self.info_text = tk.Text(main_frame, width=33, fg="black", font=(FONT_NAME, FONT_SIZE))
         self.info_text.grid(row=0, column=1, sticky="ns")
 
         btn_frame = ttk.Frame(main_frame)
