@@ -35,8 +35,7 @@ Usage:
 
 Features:
     - Table Viewer: Dynamic column selection, customizable row counts, column widths, and font sizes.
-    - Image Viewer: Displays image HDUs with zoom (20% steps), rotation (±90°), navigation,
-      and real-time RA/DEC coordinate display using WCS.
+    - Image Viewer: Displays image HDUs with zoom (20% steps), rotation (±90°)
     - Memory-efficient handling of large FITS files via memmap=True with fallback to memmap=False.
     - Centered GUI windows with consistent size (1800x950 pixels) for both Table and Image Viewers.
     - Displays a message in the main window if no tabular data is found, with an option to open the Image Viewer.
