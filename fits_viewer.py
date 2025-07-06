@@ -26,6 +26,9 @@ Requirements:
     - PIL (Pillow, for image processing)
     - matplotlib (for image rendering)
 
+Notes:
+    - Suppresses `FITSFixedWarning` via direct import: `from astropy.wcs import FITSFixedWarning`
+
 Usage:
     Run with: python fits_browser.py <fits_file_path>
     or use the provided fview.bat script: fview <fits_file_path>
@@ -35,7 +38,8 @@ Usage:
 
 Features:
     - Table Viewer: Dynamic column selection, customizable row counts, column widths, and font sizes.
-    - Image Viewer: Displays image HDUs with zoom (20% steps), rotation (±90°)
+    - Image Viewer: Displays image HDUs with zoom (20% steps), rotation (±90°), navigation,
+      and real-time RA/DEC coordinate display using WCS.
     - Memory-efficient handling of large FITS files via memmap=True with fallback to memmap=False.
     - Centered GUI windows with consistent size (1800x950 pixels) for both Table and Image Viewers.
     - Displays a message in the main window if no tabular data is found, with an option to open the Image Viewer.
@@ -51,25 +55,31 @@ Limitations:
 
 import sys
 import warnings
-from astropy.io import fits
-import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox
-import numpy as np
 import os
+import io
+
+import tkinter as tk
+from tkinter import ttk, messagebox
+from tkinter.scrolledtext import ScrolledText
+
+import numpy as np
 from PIL import Image, ImageTk
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import io
-import astropy.wcs
 
-# Suppress FITSFixedWarning to keep console output clean
-warnings.filterwarnings('ignore', category=astropy.wcs.FITSFixedWarning)
+from astropy.io import fits
+from astropy.wcs import WCS, FITSFixedWarning
+
+# Suppress specific FITS header warnings from astropy
+warnings.filterwarnings('ignore', category=FITSFixedWarning)
 
 class ImageViewer:
     def __init__(self, file_path):
         """Initialize the Image Viewer for displaying FITS image HDUs."""
         global USE_MEMMAP
         self.file_path = file_path
+        self.wcs = None  # Initialize wcs as None
+        self.tooltip = None  # Initialize tooltip
 
         # Open FITS file with memmap, fallback to memmap=False if needed
         try:
@@ -78,7 +88,7 @@ class ImageViewer:
             if 'BZERO/BSCALE/BLANK' in str(e):
                 self.hdul = fits.open(file_path, memmap=False)
                 USE_MEMMAP = False
-                # messagebox.showinfo("Memmap Disabled", "BZERO/BSCALE/BLANK headers detected in Image Viewer. Opened without memmap.")
+                messagebox.showinfo("Memmap Disabled", "BZERO/BSCALE/BLANK headers detected. Opened without memmap.")
             else:
                 raise e
 
@@ -91,12 +101,9 @@ class ImageViewer:
                         self.image_hdus.append(hdu)
                 except ValueError as e:
                     if 'BZERO/BSCALE/BLANK' in str(e):
-                        # Reopen file with memmap=False and retry
                         self.hdul.close()
                         self.hdul = fits.open(self.file_path, memmap=False)
                         USE_MEMMAP = False
-                        # messagebox.showinfo("Memmap Disabled", "BZERO/BSCALE/BLANK headers detected in Image Viewer HDU check. Reopened without memmap.")
-                        # Recheck HDUs after reopening
                         for hdu_retry in self.hdul:
                             if isinstance(hdu_retry, (fits.ImageHDU, fits.PrimaryHDU)) and hdu_retry.data is not None:
                                 self.image_hdus.append(hdu_retry)
@@ -104,15 +111,24 @@ class ImageViewer:
                     else:
                         raise e
 
+        # Check all HDUs for WCS information
+        for hdu in self.hdul:
+            try:
+                self.wcs = WCS(hdu.header, relax=True)
+                print(f"WCS found in HDU #{self.hdul.index(hdu)}")
+                break
+            except Exception as e:
+                print(f"No WCS in HDU #{self.hdul.index(hdu)}: {str(e)}")
+                continue
+
         if not self.image_hdus:
-            # messagebox.showinfo("No Images", "No image HDUs found in this file.")
+            messagebox.showinfo("No Images", "No image HDUs found in this file.")
             self.hdul.close()
             return
 
         self.index = 0
         self.zoom_factor = 1.0
         self.rotation_angle = 0
-        self.wcs = None
 
         self.win = tk.Toplevel()
         self.win.title("FITS Image Viewer")
@@ -133,8 +149,9 @@ class ImageViewer:
         self.canvas = tk.Label(main_frame, bg="black")
         self.canvas.grid(row=0, column=0, sticky="nsew")
         self.canvas.bind("<Motion>", self.on_mouse_move)
+        self.canvas.bind("<Leave>", self.destroy_tooltip)  # Destroy tooltip when mouse leaves canvas
 
-        self.info_text = tk.Text(main_frame, width=33, fg="black", font=(FONT_NAME, FONT_SIZE))
+        self.info_text = ScrolledText(main_frame, width=33, fg="black", font=(FONT_NAME, FONT_SIZE))
         self.info_text.grid(row=0, column=1, sticky="ns")
 
         btn_frame = ttk.Frame(main_frame)
@@ -161,6 +178,7 @@ class ImageViewer:
         rotate_buttons.grid(row=0, column=5, padx=20)
         ttk.Button(rotate_buttons, text="Rotate Left", command=self.rotate_left).pack(side=tk.LEFT, padx=5)
         ttk.Button(rotate_buttons, text="Rotate Right", command=self.rotate_right).pack(side=tk.LEFT, padx=5)
+
 
         ttk.Button(btn_frame, text="Exit", command=self.win.destroy).grid(row=0, column=6, sticky="e", padx=25)
 
@@ -194,20 +212,55 @@ class ImageViewer:
         self.rotation_angle = (self.rotation_angle + 90) % 360
         self.show_image()
 
+    def create_tooltip(self, widget, x, y, text):
+        """Create a tooltip at the specified position with the given text."""
+        if self.tooltip:
+            self.tooltip.destroy()
+        self.tooltip = tk.Toplevel(widget)
+        self.tooltip.wm_overrideredirect(True)  # Remove window borders
+        self.tooltip.wm_geometry(f"+{x+10}+{y+10}")  # Position tooltip near mouse
+        label = tk.Label(self.tooltip, text=text, bg="white", fg="black", relief="solid", borderwidth=1, font=(FONT_NAME, 10))
+        label.pack()
+
+    def destroy_tooltip(self, event=None):
+        """Destroy the tooltip if it exists."""
+        if self.tooltip:
+            self.tooltip.destroy()
+            self.tooltip = None
+
     def on_mouse_move(self, event):
-        """Handle mouse movement to display coordinates."""
+        """Handle mouse movement to display coordinates in a tooltip."""
         hdu = self.image_hdus[self.index]
         shape = hdu.data.shape
         x = event.x * shape[1] / self.canvas.winfo_width()
         y = shape[0] - (event.y * shape[0] / self.canvas.winfo_height())
         self.last_mouse_pos = (x, y)
-        self.show_image(x, y)
+
+        # Create tooltip with coordinates
+        try:
+            wcs = WCS(hdu.header, relax=True)
+            ra, dec = wcs.pixel_to_world_values(x, y)
+            ctype1 = hdu.header.get('CTYPE1', 'Unknown')
+            ctype2 = hdu.header.get('CTYPE2', 'Unknown')
+            tooltip_text = f"{ctype1}: {ra:.6f}\n{ctype2}: {dec:.6f}"
+        except Exception:
+            tooltip_text = f"Pixel X: {x:.2f}\nPixel Y: {y:.2f}"
+        
+        self.create_tooltip(self.canvas, event.x_root, event.y_root, tooltip_text)
 
     def show_image(self, mouse_x=None, mouse_y=None):
-        """Display the current image HDU with zoom, rotation, and coordinates."""
+        """Display the current image HDU with zoom, rotation, and static header info."""
         hdu = self.image_hdus[self.index]
         data = hdu.data
         header = hdu.header
+
+        # Debug: Print header to console for inspection
+        print(f"FITS Header for HDU #{self.hdul.index(hdu)}:")
+        for key, value in header.items():
+            if key == 'COMMENT' and isinstance(value, list):
+                if all(str(v).startswith("Index(") for v in value):
+                    continue  # skip verbose astrometry.net index entries
+            print(f"{key}: {value}")
 
         norm_data = np.nan_to_num(data)
         norm_data = (norm_data - np.min(norm_data)) / (np.ptp(norm_data) + 1e-9)
@@ -225,6 +278,7 @@ class ImageViewer:
         self.canvas.configure(image=photo)
         self.canvas.image = photo
 
+        # Clear the info text and display basic image information
         self.info_text.delete("1.0", tk.END)
         self.info_text.insert(tk.END, f"HDU #{self.hdul.index(hdu)}\n")
         self.info_text.insert(tk.END, f"Shape: {data.shape}\n")
@@ -232,19 +286,27 @@ class ImageViewer:
         self.info_text.insert(tk.END, f"Zoom: {self.zoom_factor:.2f}x\n")
         self.info_text.insert(tk.END, f"Rotation: {self.rotation_angle}°\n")
 
-        try:
-            self.wcs = WCS(header)
-            if mouse_x is not None and mouse_y is not None:
-                ra, dec = self.wcs.pixel_to_world_values(mouse_x, mouse_y)
-                self.info_text.insert(tk.END, f"RA: {ra:.6f}\n")
-                self.info_text.insert(tk.END, f"DEC: {dec:.6f}\n")
-        except Exception:
-            self.info_text.insert(tk.END, "WCS: Not available\n")
+        # Display relevant header entries
+        self.info_text.insert(tk.END, "\nFITS Header (Filtered):\n")
+        self.info_text.insert(tk.END, "-" * 30 + "\n")
+        exclude_prefixes = ['COMMENT', 'HISTORY']
+        exclude_exact = ['SIMPLE', 'BITPIX', 'EXTEND']
+        for key in header:
+            if any(key.startswith(pref) for pref in exclude_prefixes):
+                continue
+            if key in exclude_exact or key.startswith('NAXIS'):
+                continue
+            self.info_text.insert(tk.END, f"{key}: {header[key]}\n")
 
-        self.info_text.insert(tk.END, "\n")
-        for key in ("OBJECT", "INSTRUME", "DATE-OBS", "EXPTIME"):
-            if key in header:
-                self.info_text.insert(tk.END, f"{key}: {header[key]}\n")
+        # Display a few COMMENT and HISTORY entries
+        if 'COMMENT' in header:
+            for i, comment in enumerate(header['COMMENT'][:5]):  # Limit to 5 comments
+                if comment.strip():
+                    self.info_text.insert(tk.END, f"COMMENT: {comment}\n")
+        if 'HISTORY' in header:
+            for i, history in enumerate(header['HISTORY'][:5]):  # Limit to 5 history entries
+                if history.strip():
+                    self.info_text.insert(tk.END, f"HISTORY: {history}\n")
 
     def next_image(self):
         """Show the next image HDU."""
@@ -329,7 +391,7 @@ class FITSViewer:
         main_frame.pack(fill=tk.BOTH, expand=True)
 
         # Text output area
-        self.text = scrolledtext.ScrolledText(
+        self.text = ScrolledText(
             main_frame,
             font=(FONT_NAME, self.font_size),
             bg=BG_COLOR,
