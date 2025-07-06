@@ -29,7 +29,7 @@ A lightweight tool for viewing and navigating FITS (Flexible Image Transport Sys
 - **Dependencies** (install via `pip`):
 
 ```bash
-  pip install astropy numpy pillow matplotlib
+  pip install astropy numpy pillow matplotlib tkinter
 ```
 
 ---
